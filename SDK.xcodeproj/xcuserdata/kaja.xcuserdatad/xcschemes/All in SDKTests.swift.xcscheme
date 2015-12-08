@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme
+   version = "1.3">
+   <BuildAction>
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForRunning = "YES"
+            buildForTesting = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2EF64F981C08048D0043F6EC"
+               BuildableName = "SDKTests.xctest"
+               BlueprintName = "SDKTests"
+               ReferencedContainer = "container:SDK.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      buildConfiguration = "Debug">
+      <Testables>
+         <TestableReference>
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2EF64F981C08048D0043F6EC"
+               BuildableName = "SDKTests.xctest"
+               BlueprintName = "SDKTests"
+               ReferencedContainer = "container:SDK.xcodeproj">
+            </BuildableReference>
+            <SkippedTests>
+            </SkippedTests>
+         </TestableReference>
+      </Testables>
+   </TestAction>
+   <LaunchAction
+      useCustomWorkingDirectory = "NO">
+   </LaunchAction>
+</Scheme>
