@@ -36,17 +36,55 @@ class SDKTests: XCTestCase {
     func testGetClientToken() {
         let authMan = AuthManager()
         let expectation = expectationWithDescription("200")
+        let clientId = "testapp-client"
+        let clientSecret = "VXaIKFbydKSQlWxqqJXOsH9-63Y="
 
-        authMan.getClientToken() {
-            (json, err) in
-            print("callback received json: \(json) err: \(err)")
+        authMan.getClientToken(clientId: clientId, clientSecret: clientSecret) {
+            (token, err) in
+            print("callback received json: \(token) err: \(err)")
             expectation.fulfill()
         }
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
     }
     
     
-    
+    func testRegisterUser() {
+        let authMan = AuthManager()
+        let expectation = expectationWithDescription("201") //created
+
+        /*
+            {
+              "username": "JohnSmith10",
+              "credential":
+              {
+                "type": "password",
+                "password": "mypassword"
+              }
+            }
+        */
+
+        func provideUserCredentials() -> [String: AnyObject] {
+            let temp = String(NSDate().timeIntervalSince1970)
+            return [
+                    "username" : temp,
+                    "credential": ["type": "password", "password": "passwordFor\(temp)"]
+            ]
+        }
+
+        func handleUserRegistration(user: User?, err: ErrorType?) -> Void {
+            if let e = err {
+                print("err: \(e)")
+            }
+            if let u = user {
+                print("user: id:\(u.id), username=\(u.username), emailAddress:\(u.emailAddress)")
+            }
+            expectation.fulfill()
+        }
+
+        authMan.registerUser(provideUserCredentials, userRegistrationHandler: handleUserRegistration)
+
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+    }
     
     func xxxtestClientTokenRawData() {
         let clientId = "testapp-client"

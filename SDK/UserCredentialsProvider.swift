@@ -8,3 +8,8 @@
 
 import Foundation
 
+protocol UserCredentialsProvider {
+
+    func getUserCredentials() -> [String: AnyObject]
+
+}
