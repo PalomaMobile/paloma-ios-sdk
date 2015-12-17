@@ -12,62 +12,100 @@ import XCTest
 @testable import SDK
 
 class SDKTests: XCTestCase {
-    
+
+    let authMan = AuthManager(
+        tokenUrl: "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/oauth/token",
+        clientId: "testapp-client",
+        clientSecret: "VXaIKFbydKSQlWxqqJXOsH9-63Y=",
+        registerUserUrl: "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/users"
+    )
+
     override func setUp() {
+        do {
+            try authMan.clearTokens()
+        } catch {}
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
     override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
-    }
-    
-    func testExample() {
-        print("ok");
-        let tmp = "ok";
-        XCTAssertEqual("ok", tmp, "ok expected but got " + tmp)
-        let authMan = AuthManager()
-        //authMan.doIt()
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-    
-    func testGetClientToken() {
-        let authMan = AuthManager()
-        let expectation = expectationWithDescription("200")
-        let clientId = "testapp-client"
-        let clientSecret = "VXaIKFbydKSQlWxqqJXOsH9-63Y="
 
-        authMan.getClientToken(clientId: clientId, clientSecret: clientSecret) {
+    }
+
+    func testGetClientToken() {
+        var expectation = expectationWithDescription("fail from cache")
+        authMan.getClientToken(retrievalMode: .CacheOnly) {
             (token, err) in
-            print("callback received json: \(token) err: \(err)")
+            print("callback received client auth token: \(token) err: \(err)")
+            XCTAssertNil(token)
+            XCTAssertNil(err)
+            expectation.fulfill()
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+
+
+        expectation = expectationWithDescription("success from network")
+        authMan.getClientToken(retrievalMode: .NetworkOnly) {
+            (token, err) in
+            print("callback received client auth token: \(token) err: \(err)")
+            XCTAssertNotNil(token)
+            XCTAssertNil(err)
+            expectation.fulfill()
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+
+        expectation = expectationWithDescription("success from cache")
+        authMan.getClientToken(retrievalMode: .CacheOnly) {
+            (token, err) in
+            print("callback received client auth token: \(token) err: \(err)")
+            XCTAssertNotNil(token)
+            XCTAssertNil(err)
+            expectation.fulfill()
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+
+        try! authMan.clearClientToken()
+
+        expectation = expectationWithDescription("fail from cache")
+        authMan.getClientToken(retrievalMode: .CacheOnly) {
+            (token, err) in
+            print("callback received client auth token: \(token) err: \(err)")
+            XCTAssertNil(token)
+            XCTAssertNil(err)
+            expectation.fulfill()
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+
+        expectation = expectationWithDescription("success from cache then network")
+        authMan.getClientToken(retrievalMode: .CacheThenNetwork) {
+            (token, err) in
+            print("callback received client auth token: \(token) err: \(err)")
+            XCTAssertNotNil(token)
+            XCTAssertNil(err)
             expectation.fulfill()
         }
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
     }
-    
-    
+
+    /*
+    {
+      "username": "JohnSmith10",
+      "credential":
+      {
+        "type": "password",
+        "password": "mypassword"
+      }
+    }
+    */
     func testRegisterUser() {
         let authMan = AuthManager()
         let expectation = expectationWithDescription("201") //created
 
-        /*
-            {
-              "username": "JohnSmith10",
-              "credential":
-              {
-                "type": "password",
-                "password": "mypassword"
-              }
-            }
-        */
-
         func provideUserCredentials() -> [String: AnyObject] {
             let temp = String(NSDate().timeIntervalSince1970)
             return [
-                    "username" : temp,
-                    "credential": ["type": "password", "password": "passwordFor\(temp)"]
+                "username" : temp,
+                "credential": ["type": "password", "password": "passwordFor\(temp)"]
             ]
         }
 
@@ -78,6 +116,8 @@ class SDKTests: XCTestCase {
             if let u = user {
                 print("user: id:\(u.id), username=\(u.username), emailAddress:\(u.emailAddress)")
             }
+            XCTAssertNil(err)
+            XCTAssertNotNil(user)
             expectation.fulfill()
         }
 
@@ -85,7 +125,43 @@ class SDKTests: XCTestCase {
 
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
     }
-    
+
+
+    func XXXtestStartRequestWith401() {
+        let configuration = NSURLSessionConfiguration.defaultSessionConfiguration()
+        configuration.HTTPAdditionalHeaders = Manager.defaultHTTPHeaders
+        let manager = AuthenticationManager(configuration: configuration)
+
+        let expectation = expectationWithDescription("200")
+
+        let successListener : (obj: AnyObject?) -> Void = {
+            obj in
+            if let o = obj {
+                print(o)
+            }
+            expectation.fulfill()
+        }
+
+        let errorListener : (resp: NSHTTPURLResponse?, obj: AnyObject?, err: NSError) -> Void = {
+            resp, obj, err in
+            print(resp ?? "resp = nil")
+            expectation.fulfill()
+        }
+
+        let req = manager.startRequest(
+                method: .GET,
+                URLString: "http://httpbin.org/status/401",
+                        parameters: nil,
+                        encoding: .JSON,
+                        successHandler: successListener,
+                        failureHandler: errorListener)
+        if let request = req {
+            print(request)
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+
+    }
+
     func xxxtestClientTokenRawData() {
         let clientId = "testapp-client"
         let clientSecret = "VXaIKFbydKSQlWxqqJXOsH9-63Y="
@@ -148,24 +224,5 @@ class SDKTests: XCTestCase {
             // Put the code you want to measure the time of here.
         }
     }
-
-
-
-
-
-//-------------------------------
-
-
-    func makeIncrementer(forIncrement amount: Int) -> () -> Int {
-        var runningTotal = 0
-        func incrementer() -> Int {
-            runningTotal += amount
-            return runningTotal
-        }
-        return incrementer
-    }
-
-
-
 
 }

@@ -5,7 +5,7 @@
 
 import Foundation
 
-public class User {
+public struct User {
 
     var id: Int64 = 0
     var username: String = ""
