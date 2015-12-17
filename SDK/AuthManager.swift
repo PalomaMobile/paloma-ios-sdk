@@ -24,9 +24,17 @@ public enum TokenRetrievalMode {
      // Get the token from network only. Ignore any cached value.
     case NetworkOnly
 
-     // First attempt to retrieve token from local cache, if cached token not available then try to retrieve one from network.
-     case CacheThenNetwork
+    // First attempt to retrieve token from local cache, if cached token not available then try to retrieve one from network.
+    case CacheThenNetwork
 }
+
+public enum AuthTokenType: String {
+
+    case Client = "clientToken"
+
+    case User = "userToken"
+}
+
 
 @objc
 public class AuthManager: NSObject {
@@ -40,50 +48,50 @@ public class AuthManager: NSObject {
 
     var clientToken: AuthToken? {
         get {
-            return getAuthTokenFromSecureStore("clientToken")
+            return getAuthTokenFromSecureStore(.Client)
         }
         set {
-            setAuthTokenInSecureStore("clientToken", tokenValue: newValue);
+            setAuthTokenInSecureStore(.Client, tokenValue: newValue);
         }
     }
 
     var userToken: AuthToken? {
         get {
-            return getAuthTokenFromSecureStore("userToken")
+            return getAuthTokenFromSecureStore(.User)
         }
         set {
-            setAuthTokenInSecureStore("userToken", tokenValue: newValue);
+            setAuthTokenInSecureStore(.User, tokenValue: newValue);
         }
     }
 
-    private func getAuthTokenFromSecureStore(tokenName: String) -> AuthToken? {
-        var dictionary = Locksmith.loadDataForUserAccount(secureStoreUserAccoutnName, inService: tokenName)
-        if let token = dictionary?[tokenName] as? String {
+    private func getAuthTokenFromSecureStore(tokenType: AuthTokenType) -> AuthToken? {
+        var dictionary = Locksmith.loadDataForUserAccount(secureStoreUserAccoutnName, inService: tokenType.rawValue)
+        if let token = dictionary?[tokenType.rawValue] as? String {
             return AuthToken(json: JSON.parse(token))
         }
         //XXX: implement this: removeSessionHeaderIfExists("Authorization")
         return nil
     }
 
-    private func setAuthTokenInSecureStore(tokenName: String, tokenValue: AuthToken?) {
+    private func setAuthTokenInSecureStore(tokenType: AuthTokenType, tokenValue: AuthToken?) {
         if let valueToSave = tokenValue {
             do {
-                try Locksmith.saveData([tokenName: valueToSave.toJSON().rawString()!], forUserAccount: secureStoreUserAccoutnName, inService: tokenName)
+                try Locksmith.saveData([tokenType.rawValue: valueToSave.toJSON().rawString()!], forUserAccount: secureStoreUserAccoutnName, inService: tokenType.rawValue)
                 //XXX: implement this: addSessionHeader("Authorization", value: "clientToken \(newValue)")
             }
             catch {
-                print("Unable to save \(tokenName)")
+                print("Unable to save \(tokenType.rawValue)")
                 do {
-                    try Locksmith.deleteDataForUserAccount(secureStoreUserAccoutnName, inService: tokenName)
+                    try Locksmith.deleteDataForUserAccount(secureStoreUserAccoutnName, inService: tokenType.rawValue)
                 }
-                catch { print("Unable to delete \(tokenName)") }
+                catch { print("Unable to delete \(tokenType.rawValue)") }
             }
         }
         else { // they set it to nil, so delete it
             do {
-                try Locksmith.deleteDataForUserAccount(secureStoreUserAccoutnName, inService: tokenName)
+                try Locksmith.deleteDataForUserAccount(secureStoreUserAccoutnName, inService: tokenType.rawValue)
                 //XXX: implement this: removeSessionHeaderIfExists("Authorization")
-            } catch { print("Unable to delete \(tokenName)") }
+            } catch { print("Unable to delete \(tokenType.rawValue)") }
         }
     }
 
