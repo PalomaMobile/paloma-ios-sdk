@@ -15,6 +15,9 @@ import Foundation
 import Alamofire
 import Locksmith
 
+
+public typealias AuthTokenHandler = (AuthToken?, ErrorType?) -> Void
+
 // Specifies the token retrieval options.
 public enum TokenRetrievalMode {
 
@@ -124,7 +127,7 @@ public class AuthManager: NSObject {
 
     public func getClientToken(
             retrievalMode retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-            clientTokenHandler clientTokenHandler: (AuthToken?, ErrorType?) -> Void)
+            clientTokenHandler clientTokenHandler: AuthTokenHandler)
             -> Void {
         getClientToken(clientId: clientId, clientSecret: clientSecret, retrievalMode: retrievalMode, clientTokenHandler: clientTokenHandler)
     }
@@ -133,7 +136,7 @@ public class AuthManager: NSObject {
             clientId clientId: String,
             clientSecret clientSecret: String,
             retrievalMode retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-            clientTokenHandler clientTokenHandler: (AuthToken?, ErrorType?) -> Void)
+            clientTokenHandler clientTokenHandler: AuthTokenHandler)
             -> Void {
 
         let creds: NSData = (clientId + ":" + clientSecret).dataUsingEncoding(NSUTF8StringEncoding)!
@@ -164,7 +167,7 @@ public class AuthManager: NSObject {
     public func retrieveClientTokenFromNetwork(
             encodedCreds encodedCreds: String,
             tokenTimeOutSecs tokenTimeOutSecs: Int? = nil,
-            clientTokenHandler clientTokenHandler: (AuthToken?, ErrorType?) -> Void)
+            clientTokenHandler clientTokenHandler: AuthTokenHandler)
             -> Void
     {
         Alamofire.upload(
@@ -241,7 +244,7 @@ public class AuthManager: NSObject {
     public func getUserTokenFromNetwork(
             userCredentialProvider: () -> [String: AnyObject],
             retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-            userTokenHandler userTokenHandler: (AuthToken?, ErrorType?) -> Void) {
+            userTokenHandler userTokenHandler: AuthTokenHandler -> Void) {
         let userCredentials = userCredentialProvider()
 
         getClientToken() {
@@ -288,7 +291,7 @@ grant_type=password
 //            clientId clientId: String,
 //            clientSecret clientSecret: String,
 //            retrievalMode retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-//            userTokenHandler userTokenHandler: (AuthToken?, ErrorType?) -> Void)
+//            userTokenHandler userTokenHandler: AuthTokenHandler -> Void)
 //                    -> Void {
 //
 //        let creds: NSData = (clientId + ":" + clientSecret).dataUsingEncoding(NSUTF8StringEncoding)!
@@ -316,7 +319,7 @@ grant_type=password
 //        return userToken
 //    }
 //
-//    public func retrieveUserTokenFromNetwork(encodedCreds encodedCreds: String, userTokenHandler userTokenHandler: (AuthToken?, ErrorType?) -> Void) {}
+//    public func retrieveUserTokenFromNetwork(encodedCreds encodedCreds: String, userTokenHandler userTokenHandler: AuthTokenHandler -> Void) {}
 //        Alamofire.upload(
 //            Method.POST,
 //            tokenUrl,
