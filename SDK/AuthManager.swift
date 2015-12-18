@@ -155,35 +155,6 @@ public class AuthManager: NSObject {
         }
     }
 
-/*
-
-curl
-curl -X POST -vu ${CLIENT_ID}:${CLIENT_SECRET} http://${USER_HOST}/oauth/token -H "Accept: application/json" -d "grant_type=client_credentials"
-
-request
-POST /oauth/token HTTP/1.1
-Authorization: Basic Y2xpZW50YXBwOjEyMzQ1Ng==
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=client_credentials
-
--------
-
-curl
-curl -X POST -u ${CLIENT_ID}:${CLIENT_SECRET} http://${USER_HOST}/oauth/token -H "Accept: application/json" -d "password=${FACEBOOK_TOKEN}&username=JohnSmith10&grant_type=password&credential_type=facebook"
-
-request
-POST /oauth/token HTTP/1.1
-Authorization: Basic Y2xpZW50YXBwOjEyMzQ1Ng==
-Content-Type: application/x-www-form-urlencoded
-
-username=JohnSmith10&
-passsword=<facebook-access-token>&
-credential_type=facebook&
-grant_type=password
-
-*/
-
     public func retrieveAuthTokenFromNetwork(
             tokenType: AuthTokenType,
             tokenTimeOutSecs: Int? = nil,
@@ -206,17 +177,22 @@ grant_type=password
                     case .Client:
                         multipartFormData.appendBodyPart(data: "client_credentials".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
                     case .User:
-
-                        multipartFormData.appendBodyPart(data: "".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "username")
-                        multipartFormData.appendBodyPart(data: "".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "passsword")
-                        multipartFormData.appendBodyPart(data: "password".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "credential_type")
-                        multipartFormData.appendBodyPart(data: "password".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
+                        if let provider = self.userCredentialProvider {
+                            var userCredentials = provider()
+                            print("get user token for: userCredentials.username: \(userCredentials.username!), userCredentials.password: \(userCredentials.password!)")
+                            multipartFormData.appendBodyPart(data: userCredentials.username!.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "username")
+                            multipartFormData.appendBodyPart(data: userCredentials.password!.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "password")
+                            multipartFormData.appendBodyPart(data: "password".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "credential_type")
+                            multipartFormData.appendBodyPart(data: "password".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
+                            debugPrint(multipartFormData)
+                        }
                 }
             },
             encodingCompletion: {
                 result in
                 switch result {
                 case .Success(let uploadRequest, _, _ ): //success locally encoding the multipartFormData
+                    debugPrint(uploadRequest)
                     uploadRequest
                     .validate()
                     .responseJSON {
@@ -229,12 +205,12 @@ grant_type=password
                                 self.clientToken = token
                                 tokenHandler(token, nil)
                             case .Failure(let err):
-                                print("Error: \(err)")
+                                print("Error with jsonData: \(err)")
                                 tokenHandler(nil, err)
                         }
                     }
                 case .Failure(let err):
-                    print("Error: \(err)")
+                    print("Error on encodingCompletion: \(err)")
                     tokenHandler(nil, err)
                 }
             }

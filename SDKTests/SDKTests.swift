@@ -99,10 +99,10 @@ class SDKTests: XCTestCase {
     */
     func testRegisterUser() {
         let authMan = AuthManager()
-        let expectation = expectationWithDescription("201") //created
+        var expectation = expectationWithDescription("201") //created
+        let temp = String(NSDate().timeIntervalSince1970)
 
         func provideUserCredentials() -> UserCredential {
-            let temp = String(NSDate().timeIntervalSince1970)
             var userCredential = UserCredential()
             userCredential.username = temp
             userCredential.credential = [
@@ -125,8 +125,18 @@ class SDKTests: XCTestCase {
 
         authMan.userCredentialProvider = provideUserCredentials
         authMan.registerUser(userRegistrationHandler: handleUserRegistration)
-
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+
+
+        expectation = expectationWithDescription("200") //created
+
+        authMan.getAuthToken(.User, retrievalMode: .CacheThenNetwork) {
+            (authToken, errorType) in
+            XCTAssertNil(errorType)
+            XCTAssertNotNil(authToken)
+            expectation.fulfill()
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(3000.0), handler: nil)
     }
 
 
