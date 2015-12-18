@@ -34,7 +34,7 @@ class SDKTests: XCTestCase {
 
     func testGetClientToken() {
         var expectation = expectationWithDescription("fail from cache")
-        authMan.getClientToken(retrievalMode: .CacheOnly) {
+        authMan.getAuthToken(.Client, retrievalMode: .CacheOnly) {
             (token, err) in
             print("callback received client auth token: \(token) err: \(err)")
             XCTAssertNil(token)
@@ -45,7 +45,7 @@ class SDKTests: XCTestCase {
 
 
         expectation = expectationWithDescription("success from network")
-        authMan.getClientToken(retrievalMode: .NetworkOnly) {
+        authMan.getAuthToken(.Client, retrievalMode: .NetworkOnly) {
             (token, err) in
             print("callback received client auth token: \(token) err: \(err)")
             XCTAssertNotNil(token)
@@ -55,7 +55,7 @@ class SDKTests: XCTestCase {
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
 
         expectation = expectationWithDescription("success from cache")
-        authMan.getClientToken(retrievalMode: .CacheOnly) {
+        authMan.getAuthToken(.Client, retrievalMode: .CacheOnly) {
             (token, err) in
             print("callback received client auth token: \(token) err: \(err)")
             XCTAssertNotNil(token)
@@ -67,7 +67,7 @@ class SDKTests: XCTestCase {
         try! authMan.clearClientToken()
 
         expectation = expectationWithDescription("fail from cache")
-        authMan.getClientToken(retrievalMode: .CacheOnly) {
+        authMan.getAuthToken(.Client, retrievalMode: .CacheOnly) {
             (token, err) in
             print("callback received client auth token: \(token) err: \(err)")
             XCTAssertNil(token)
@@ -77,7 +77,7 @@ class SDKTests: XCTestCase {
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
 
         expectation = expectationWithDescription("success from cache then network")
-        authMan.getClientToken(retrievalMode: .CacheThenNetwork) {
+        authMan.getAuthToken(.Client, retrievalMode: .CacheThenNetwork) {
             (token, err) in
             print("callback received client auth token: \(token) err: \(err)")
             XCTAssertNotNil(token)
@@ -101,12 +101,14 @@ class SDKTests: XCTestCase {
         let authMan = AuthManager()
         let expectation = expectationWithDescription("201") //created
 
-        func provideUserCredentials() -> [String: AnyObject] {
+        func provideUserCredentials() -> UserCredential {
             let temp = String(NSDate().timeIntervalSince1970)
-            return [
-                "username" : temp,
-                "credential": ["type": "password", "password": "passwordFor\(temp)"]
+            var userCredential = UserCredential()
+            userCredential.username = temp
+            userCredential.credential = [
+                "type": "password", "password": "passwordFor\(temp)"
             ]
+            return userCredential
         }
 
         func handleUserRegistration(user: User?, err: ErrorType?) -> Void {
@@ -121,7 +123,8 @@ class SDKTests: XCTestCase {
             expectation.fulfill()
         }
 
-        authMan.registerUser(provideUserCredentials, userRegistrationHandler: handleUserRegistration)
+        authMan.userCredentialProvider = provideUserCredentials
+        authMan.registerUser(userRegistrationHandler: handleUserRegistration)
 
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
     }

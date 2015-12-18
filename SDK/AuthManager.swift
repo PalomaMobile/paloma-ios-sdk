@@ -17,6 +17,7 @@ import Locksmith
 
 
 public typealias AuthTokenHandler = (AuthToken?, ErrorType?) -> Void
+public typealias UserCredentialProvider = () -> UserCredential
 
 // Specifies the token retrieval options.
 public enum TokenRetrievalMode {
@@ -38,33 +39,31 @@ public enum AuthTokenType: String {
     case User = "userToken"
 }
 
+public enum UserRegistrationError: ErrorType {
+    case ErrNoUserCredentialProvider
+}
 
 @objc
 public class AuthManager: NSObject {
 
     let tokenUrl: String
-    let clientId: String
-    let clientSecret: String
     let registerUserUrl: String
     let secureStoreUserAccoutnName: String
     var user: User? = nil
 
+    var clientId: String
+    var clientSecret: String
+
+    var userCredentialProvider: UserCredentialProvider? = nil
+
     var clientToken: AuthToken? {
-        get {
-            return getAuthTokenFromSecureStore(.Client)
-        }
-        set {
-            setAuthTokenInSecureStore(.Client, tokenValue: newValue);
-        }
+        get { return getAuthTokenFromSecureStore(.Client) }
+        set { setAuthTokenInSecureStore(.Client, tokenValue: newValue) }
     }
 
     var userToken: AuthToken? {
-        get {
-            return getAuthTokenFromSecureStore(.User)
-        }
-        set {
-            setAuthTokenInSecureStore(.User, tokenValue: newValue);
-        }
+        get { return getAuthTokenFromSecureStore(.User) }
+        set { setAuthTokenInSecureStore(.User, tokenValue: newValue) }
     }
 
     private func getAuthTokenFromSecureStore(tokenType: AuthTokenType) -> AuthToken? {
@@ -125,131 +124,36 @@ public class AuthManager: NSObject {
     }
 
 
-    public func getClientToken(
-            retrievalMode retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-            clientTokenHandler clientTokenHandler: AuthTokenHandler)
-            -> Void {
-        getClientToken(clientId: clientId, clientSecret: clientSecret, retrievalMode: retrievalMode, clientTokenHandler: clientTokenHandler)
-    }
-
-    public func getClientToken(
-            clientId clientId: String,
-            clientSecret clientSecret: String,
-            retrievalMode retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-            clientTokenHandler clientTokenHandler: AuthTokenHandler)
-            -> Void {
-
-        let creds: NSData = (clientId + ":" + clientSecret).dataUsingEncoding(NSUTF8StringEncoding)!
-        let encodedCreds: String = creds.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.init(rawValue: 0))
+    public func getAuthToken(
+        tokenType: AuthTokenType,
+        retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
+        tokenHandler: AuthTokenHandler)
+        -> Void {
 
         switch retrievalMode {
             case .CacheOnly:
                 print("getting token from cache only")
-                clientTokenHandler(retrieveClientTokenFromCache(), nil)
+                tokenHandler(retrieveAuthTokenFromCache(tokenType), nil)
             case .NetworkOnly:
                 print("getting token from network only")
-                retrieveClientTokenFromNetwork(encodedCreds: encodedCreds, clientTokenHandler: clientTokenHandler)
+                retrieveAuthTokenFromNetwork(tokenType, tokenHandler: tokenHandler)
             case .CacheThenNetwork:
                 print("getting token from cache or network")
-                if let token = retrieveClientTokenFromCache() {
-                    clientTokenHandler(token, nil)
+                if let token = retrieveAuthTokenFromCache(tokenType) {
+                    tokenHandler(token, nil)
                 }
                 else {
-                    retrieveClientTokenFromNetwork(encodedCreds: encodedCreds, clientTokenHandler: clientTokenHandler)
+                    retrieveAuthTokenFromNetwork(tokenType, tokenHandler: tokenHandler)
                 }
         }
     }
 
-    public func retrieveClientTokenFromCache() -> AuthToken? {
-        return clientToken
-    }
-
-    public func retrieveClientTokenFromNetwork(
-            encodedCreds encodedCreds: String,
-            tokenTimeOutSecs tokenTimeOutSecs: Int? = nil,
-            clientTokenHandler clientTokenHandler: AuthTokenHandler)
-            -> Void
-    {
-        Alamofire.upload(
-            Method.POST,
-            tokenUrl,
-            headers: ["Authorization": "Basic \(encodedCreds)"],
-            multipartFormData: {
-                multipartFormData in
-                multipartFormData.appendBodyPart(data: "client_credentials".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
-                if let forceTokenTimeoutSecs = tokenTimeOutSecs {
-                    multipartFormData.appendBodyPart(data: String(forceTokenTimeoutSecs).dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "token_timeout")
-                }
-            },
-            encodingCompletion: {
-                result in
-                switch result {
-                case .Success(let uploadRequest, _, _ ): //success locally encoding the multipartFormData
-                    uploadRequest
-                    .validate()
-                    .responseJSON {
-                        response in
-                        switch response.result {
-                            case .Success(let jsonData):
-                                print("Success with jsonData: \(jsonData)")
-                                let json = JSON(jsonData)
-                                let token = AuthToken(json: json)
-                                self.clientToken = token
-                                clientTokenHandler(token, nil)
-                            case .Failure(let err):
-                                print("Error: \(err)")
-                                clientTokenHandler(nil, err)
-                        }
-                    }
-                case .Failure(let err):
-                    print("Error: \(err)")
-                    clientTokenHandler(nil, err)
-                }
-            }
-        )
-    }
-
-
-    public func registerUser(userCredentialProvider: () -> [String: AnyObject], retrievalMode: TokenRetrievalMode = .CacheThenNetwork, userRegistrationHandler userRegistrationHandler: (User?, ErrorType?) -> Void) {
-        let userCredentials = userCredentialProvider()
-
-        getClientToken() {
-            (clientToken, error) in
-            if let token = clientToken {
-                let request = Alamofire.request(.POST, self.registerUserUrl, parameters: userCredentials, encoding: .JSON, headers: ["Authorization" : token.token_type + " " + token.access_token])
-                print("DebugDescription: " + request.debugDescription)
-
-                request
-                .validate()
-                .responseJSON() {
-                    response in switch response.result {
-                    case .Success(let jsonData):
-                        print("Success with jsonData: \(jsonData)")
-                        let json = JSON(jsonData)
-                        self.user = User(json: json)
-                        userRegistrationHandler(self.user, nil)
-                    case .Failure(let err):
-                        print("Error: \(err)")
-                        userRegistrationHandler(nil, err)
-                    }
-                }
-            }
-            else {
-                userRegistrationHandler(nil, error)
-            }
+    public func retrieveAuthTokenFromCache(tokenType: AuthTokenType) -> AuthToken? {
+        switch tokenType {
+            case .Client: return clientToken
+            case .User: return userToken
         }
     }
-
-    //XXX Finish this once retrieveClientTokenFromNetwork() is refactored into a generic retrieveAuthTokenFromNetwork()
-    public func getUserTokenFromNetwork(
-            userCredentialProvider: () -> [String: AnyObject],
-            retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-            userTokenHandler userTokenHandler: AuthTokenHandler -> Void) {
-        let userCredentials = userCredentialProvider()
-
-        getClientToken() {
-            (clientToken, error) in
-            if let token = clientToken {
 
 /*
 
@@ -279,83 +183,105 @@ credential_type=facebook&
 grant_type=password
 
 */
+
+    public func retrieveAuthTokenFromNetwork(
+            tokenType: AuthTokenType,
+            tokenTimeOutSecs: Int? = nil,
+            tokenHandler: AuthTokenHandler)
+            -> Void
+    {
+        let creds: NSData = (clientId + ":" + clientSecret).dataUsingEncoding(NSUTF8StringEncoding)!
+        let encodedCreds: String = creds.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.init(rawValue: 0))
+
+        Alamofire.upload(
+            Method.POST,
+            tokenUrl,
+            headers: ["Authorization": "Basic \(encodedCreds)"],
+            multipartFormData: {
+                multipartFormData in
+                if let forceTokenTimeoutSecs = tokenTimeOutSecs {
+                    multipartFormData.appendBodyPart(data: String(forceTokenTimeoutSecs).dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "token_timeout")
+                }
+                switch tokenType {
+                    case .Client:
+                        multipartFormData.appendBodyPart(data: "client_credentials".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
+                    case .User:
+
+                        multipartFormData.appendBodyPart(data: "".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "username")
+                        multipartFormData.appendBodyPart(data: "".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "passsword")
+                        multipartFormData.appendBodyPart(data: "password".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "credential_type")
+                        multipartFormData.appendBodyPart(data: "password".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
+                }
+            },
+            encodingCompletion: {
+                result in
+                switch result {
+                case .Success(let uploadRequest, _, _ ): //success locally encoding the multipartFormData
+                    uploadRequest
+                    .validate()
+                    .responseJSON {
+                        response in
+                        switch response.result {
+                            case .Success(let jsonData):
+                                print("Success with jsonData: \(jsonData)")
+                                let json = JSON(jsonData)
+                                let token = AuthToken(json: json)
+                                self.clientToken = token
+                                tokenHandler(token, nil)
+                            case .Failure(let err):
+                                print("Error: \(err)")
+                                tokenHandler(nil, err)
+                        }
+                    }
+                case .Failure(let err):
+                    print("Error: \(err)")
+                    tokenHandler(nil, err)
+                }
+            }
+        )
+    }
+
+
+    public func registerUser(retrievalMode: TokenRetrievalMode = .CacheThenNetwork, userRegistrationHandler userRegistrationHandler: (User?, ErrorType?) -> Void) {
+
+        if let provider = self.userCredentialProvider {
+
+            var userCredentials = provider()
+
+            getAuthToken(.Client) {
+                (clientToken, error) in
+                if let token = clientToken {
+                    let request = Alamofire.request(.POST, self.registerUserUrl, parameters: userCredentials.toDictionary(), encoding: .JSON, headers: ["Authorization" : token.token_type + " " + token.access_token])
+                    print("DebugDescription: " + request.debugDescription)
+
+                    request
+                    .validate()
+                    .responseJSON() {
+                        response in switch response.result {
+                        case .Success(let jsonData):
+                            print("Success with jsonData: \(jsonData)")
+                            let json = JSON(jsonData)
+                            self.user = User(json: json)
+                            userRegistrationHandler(self.user, nil)
+                        case .Failure(let err):
+                            print("Error: \(err)")
+                            userRegistrationHandler(nil, err)
+                        }
+                    }
+                }
+                else {
+                    userRegistrationHandler(nil, error)
+                }
             }
         }
+        else {
+            userRegistrationHandler(nil, UserRegistrationError.ErrNoUserCredentialProvider)
+            return
+        }
+
     }
 
 
     func tokenExpiredError(){}
-
-
-//    public func getUserToken(
-//            clientId clientId: String,
-//            clientSecret clientSecret: String,
-//            retrievalMode retrievalMode: TokenRetrievalMode = .CacheThenNetwork,
-//            userTokenHandler userTokenHandler: AuthTokenHandler -> Void)
-//                    -> Void {
-//
-//        let creds: NSData = (clientId + ":" + clientSecret).dataUsingEncoding(NSUTF8StringEncoding)!
-//        let encodedCreds: String = creds.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.init(rawValue: 0))
-//
-//        switch retrievalMode {
-//        case .CacheOnly:
-//            print("getting token from cache only")
-//            userTokenHandler(retrieveUserTokenFromCache(), nil)
-//        case .NetworkOnly:
-//            print("getting token from network only")
-//            retrieveUserTokenFromNetwork(encodedCreds: encodedCreds, userTokenHandler: userTokenHandler)
-//        case .CacheThenNetwork:
-//            print("getting token from cache or network")
-//            if let token = retrieveUserTokenFromCache() {
-//                userTokenHandler(token, nil)
-//            }
-//            else {
-//                retrieveUserTokenFromNetwork(encodedCreds: encodedCreds, userTokenHandler: userTokenHandler)
-//            }
-//        }
-//    }
-//
-//    public func retrieveUserTokenFromCache() -> AuthToken? {
-//        return userToken
-//    }
-//
-//    public func retrieveUserTokenFromNetwork(encodedCreds encodedCreds: String, userTokenHandler userTokenHandler: AuthTokenHandler -> Void) {}
-//        Alamofire.upload(
-//            Method.POST,
-//            tokenUrl,
-//            headers: ["Authorization": "Basic \(encodedCreds)"],
-//            multipartFormData: {
-//                multipartFormData in
-//                  NEED TO BUILD UP THIS
-//                //multipartFormData.appendBodyPart(data: "client_credentials".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
-//            },
-//            encodingCompletion: {
-//                result in
-//                switch result {
-//                case .Success(let upload, _, _ ): //success locally encoding the multipartFormData
-//                    upload
-//                    .validate()
-//                    .responseJSON {
-//                        response in
-//                        switch response.result {
-//                        case .Success(let jsonData):
-//                            print("Success with jsonData: \(jsonData)")
-//                            let json = JSON(jsonData)
-//                            self.userToken = AuthToken(json: json)
-//                            userTokenHandler(self.userToken, nil)
-//                        case .Failure(let err):
-//                            print("Error: \(err)")
-//                            userTokenHandler(nil, err)
-//                        }
-//                    }
-//                case .Failure(let err):
-//                    print("Error: \(err)")
-//                    userTokenHandler(nil, err)
-//                }
-//            }
-//        )
-//    }
-
-
 
 }
