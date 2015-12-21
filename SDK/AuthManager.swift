@@ -46,8 +46,18 @@ public enum UserRegistrationError: ErrorType {
 @objc
 public class AuthManager: NSObject {
 
-    let tokenUrl: String
-    let registerUserUrl: String
+    var baseUrl: String
+
+    var tokenUrl: String {
+        get { return baseUrl + "/oauth/token"}
+    }
+    var registerUserUrl: String {
+        get { return baseUrl + "/users"}
+    }
+    var readUserUrl: String {
+        get { return baseUrl + "/users/"}
+    }
+
     let secureStoreUserAccoutnName: String
     var user: User? = nil
 
@@ -98,17 +108,15 @@ public class AuthManager: NSObject {
     }
 
     init(
-            tokenUrl tokenUrl: String = "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/oauth/token",
-            clientId clientId: String = "testapp-client",
-            clientSecret clientSecret: String = "VXaIKFbydKSQlWxqqJXOsH9-63Y=",
-            registerUserUrl registerUserUrl: String = "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/users",
-            secureStoreUserAccoutnName secureStoreUserAccoutnName: String = "healthmapper"
+            baseUrl baseUrl: String = "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com",
+            clientId: String = "testapp-client",
+            clientSecret: String = "VXaIKFbydKSQlWxqqJXOsH9-63Y=",
+            secureStoreUserAccoutnName: String = "healthmapper"
     )
     {
-        self.tokenUrl = tokenUrl
+        self.baseUrl = baseUrl
         self.clientId = clientId
         self.clientSecret = clientSecret
-        self.registerUserUrl = registerUserUrl
         self.secureStoreUserAccoutnName = secureStoreUserAccoutnName
     }
 
@@ -202,7 +210,12 @@ public class AuthManager: NSObject {
                                 print("Success with jsonData: \(jsonData)")
                                 let json = JSON(jsonData)
                                 let token = AuthToken(json: json)
-                                self.clientToken = token
+                                switch tokenType {
+                                case .Client:
+                                    self.clientToken = token
+                                case .User:
+                                    self.userToken = token
+                                }
                                 tokenHandler(token, nil)
                             case .Failure(let err):
                                 print("Error with jsonData: \(err)")

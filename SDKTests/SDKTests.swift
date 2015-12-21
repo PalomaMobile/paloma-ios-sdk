@@ -14,10 +14,9 @@ import XCTest
 class SDKTests: XCTestCase {
 
     let authMan = AuthManager(
-        tokenUrl: "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/oauth/token",
+        baseUrl: "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com",
         clientId: "testapp-client",
-        clientSecret: "VXaIKFbydKSQlWxqqJXOsH9-63Y=",
-        registerUserUrl: "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/users"
+        clientSecret: "VXaIKFbydKSQlWxqqJXOsH9-63Y="
     )
 
     override func setUp() {
@@ -32,7 +31,7 @@ class SDKTests: XCTestCase {
 
     }
 
-    func testGetClientToken() {
+    func testGetClientAuthToken() {
         var expectation = expectationWithDescription("fail from cache")
         authMan.getAuthToken(.Client, retrievalMode: .CacheOnly) {
             (token, err) in
@@ -98,7 +97,6 @@ class SDKTests: XCTestCase {
     }
     */
     func testRegisterUser() {
-        let authMan = AuthManager()
         var expectation = expectationWithDescription("201") //created
         let temp = String(NSDate().timeIntervalSince1970)
 
@@ -128,114 +126,92 @@ class SDKTests: XCTestCase {
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
 
 
-        expectation = expectationWithDescription("200") //created
-
-        authMan.getAuthToken(.User, retrievalMode: .CacheThenNetwork) {
-            (authToken, errorType) in
-            XCTAssertNil(errorType)
-            XCTAssertNotNil(authToken)
-            expectation.fulfill()
-        }
-        waitForExpectationsWithTimeout(NSTimeInterval(3000.0), handler: nil)
     }
 
 
-    func XXXtestStartRequestWith401() {
-        let configuration = NSURLSessionConfiguration.defaultSessionConfiguration()
-        configuration.HTTPAdditionalHeaders = Manager.defaultHTTPHeaders
-        let manager = AuthenticationManager(configuration: configuration)
+    func testGetUserAuthToken() {
 
-        let expectation = expectationWithDescription("200")
-
-        let successListener : (obj: AnyObject?) -> Void = {
-            obj in
-            if let o = obj {
-                print(o)
-            }
+        var expectation = expectationWithDescription("fail from cache")
+        authMan.getAuthToken(.User, retrievalMode: .CacheOnly) {
+            (token, err) in
+            print("callback received user auth token: \(token) err: \(err)")
+            XCTAssertNil(token)
+            XCTAssertNil(err)
             expectation.fulfill()
-        }
-
-        let errorListener : (resp: NSHTTPURLResponse?, obj: AnyObject?, err: NSError) -> Void = {
-            resp, obj, err in
-            print(resp ?? "resp = nil")
-            expectation.fulfill()
-        }
-
-        let req = manager.startRequest(
-                method: .GET,
-                URLString: "http://httpbin.org/status/401",
-                        parameters: nil,
-                        encoding: .JSON,
-                        successHandler: successListener,
-                        failureHandler: errorListener)
-        if let request = req {
-            print(request)
         }
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
 
-    }
+        let temp = String(NSDate().timeIntervalSince1970)
+        if let user = registerUserUtil(temp, password: temp) {
+            expectation = expectationWithDescription("201") //created
 
-    func xxxtestClientTokenRawData() {
-        let clientId = "testapp-client"
-        let clientSecret = "VXaIKFbydKSQlWxqqJXOsH9-63Y="
-        let tokenUrl = "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com/oauth/token"
-        
-        let dataValueUtf8: NSData = (clientId + ":" + clientSecret).dataUsingEncoding(NSUTF8StringEncoding)!
-        let encodedCreds: String = dataValueUtf8.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.init(rawValue: 0))
-        
-        var request: NSURLRequest?
-        var response: NSHTTPURLResponse?
-        var data: NSData?
-        var error: NSError?
-
-        let expectation = expectationWithDescription("200")
-
-        Alamofire.upload(
-            Method.POST,
-            tokenUrl,
-            headers: ["Authorization": "Basic \(encodedCreds)"],
-            multipartFormData: { multipartFormData in
-                multipartFormData.appendBodyPart(data: "client_credentials".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, name: "grant_type")
-            },
-            encodingCompletion: { result in
-                switch result {
-                case .Success(let upload, _, _): //succes locally encoding the multipartFormData
-                    upload.response { responseRequest, responseResponse, responseData, responseError in
-                        request = responseRequest
-                        response = responseResponse
-                        data = responseData
-                        error = responseError
-                        expectation.fulfill()
-                    }
-                case .Failure: //failed to locally encode the multipartFormData
-                    print("Failure")
-                    expectation.fulfill()
-                }
+            authMan.getAuthToken(.User, retrievalMode: .CacheThenNetwork) {
+                (authToken, errorType) in
+                XCTAssertNil(errorType)
+                XCTAssertNotNil(authToken)
+                expectation.fulfill()
             }
-        )
-        
+            waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+            print("client token: \(authMan.clientToken)")
+            print("user token: \(authMan.userToken)")
+            XCTAssertNotEqual(authMan.clientToken!.access_token, authMan.userToken!.access_token)
+        }
+        else {
+            XCTFail("registerUser() ERROR")
+        }
+
+        expectation = expectationWithDescription("success from cache")
+        authMan.getAuthToken(.Client, retrievalMode: .CacheOnly) {
+            (token, err) in
+            print("callback received client auth token: \(token) err: \(err)")
+            XCTAssertNotNil(token)
+            XCTAssertNil(err)
+            expectation.fulfill()
+        }
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
-        XCTAssertNotNil(request, "request should not be nil")
-        XCTAssertNotNil(response, "response should be nil")
-        XCTAssertNotNil(data, "data should not be nil")
-        XCTAssertNil(error, "error should not be nil")
-        
-        if let r = response {
-            print("Printing RESPONSE:")
-            print(r)
+
+        try! authMan.clearUserToken()
+
+        expectation = expectationWithDescription("fail from cache")
+        authMan.getAuthToken(.User, retrievalMode: .CacheOnly) {
+            (token, err) in
+            print("callback received user auth token: \(token) err: \(err)")
+            XCTAssertNil(token)
+            XCTAssertNil(err)
+            expectation.fulfill()
         }
-        if let d = data {
-            let s = String(data: d, encoding: NSUTF8StringEncoding)
-            print("Printing DATA:")
-            print(s)
-        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
     }
-    
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measureBlock {
-            // Put the code you want to measure the time of here.
+
+
+
+    func registerUserUtil(username: String, password: String) -> User?  {
+
+        authMan.userCredentialProvider = {
+            var userCredential = UserCredential()
+            userCredential.username = username
+            userCredential.credential = [
+                    "type": "password", "password": "\(password)"
+            ]
+            return userCredential
         }
+        var userSuccess: User?
+        var expectation = expectationWithDescription("201") //created
+        authMan.registerUser() {
+            (user, err) in
+            if let e = err {
+                print("err: \(e)")
+            }
+            if let u = user {
+                print("user: id:\(u.id), username=\(u.username), emailAddress:\(u.emailAddress)")
+                userSuccess = u
+            }
+            XCTAssertNil(err)
+            XCTAssertNotNil(user)
+            expectation.fulfill()
+        }
+        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
+        return userSuccess
     }
 
 }
