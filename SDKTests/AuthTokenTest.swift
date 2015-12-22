@@ -5,6 +5,8 @@
 
 import Foundation
 import XCTest
+import SwiftyJSON
+
 @testable import SDK
 
 class AuthTokenTest: XCTestCase {
@@ -18,10 +20,12 @@ class AuthTokenTest: XCTestCase {
                 "scope" : "value_scope",
         ])
 
-        var jsonStr = token.toJSON().rawString()
-        print(jsonStr)
-        XCTAssertNotNil(jsonStr, "at should not be nil")
+        let jsonFromToken = token.toJSON()
+        print(jsonFromToken)
+        XCTAssertNotNil(jsonFromToken, " should not be nil")
 
+        let tokenReinflated = AuthToken(json: jsonFromToken)
+        XCTAssertEqual(token, tokenReinflated)
     }
 
 }

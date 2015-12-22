@@ -7,8 +7,9 @@
 //
 
 import Foundation
+import SwiftyJSON
 
-public struct AuthToken {
+public struct AuthToken: Equatable {
 
     var access_token: String = ""
     var refresh_token: String? = nil
@@ -26,7 +27,7 @@ public struct AuthToken {
 
     init(dict: [String: AnyObject]) {
         if let access_token = dict["access_token"] { self.access_token = access_token as! String}
-        if let refresh_token = dict["refresh_token"] { self.refresh_token = refresh_token as! String}
+        if let refresh_token = dict["refresh_token"] { self.refresh_token = refresh_token as? String}
         if let token_type = dict["token_type"] { self.token_type = token_type  as! String}
         if let expires_in = dict["expires_in"] { self.expires_in = expires_in as! Int}
         if let scope = dict["scope"] { self.scope = scope  as! String}
@@ -47,3 +48,12 @@ public struct AuthToken {
     }
 
 }
+
+public func ==(lhs: AuthToken, rhs: AuthToken) -> Bool {
+    return lhs.access_token == rhs.access_token
+            && lhs.refresh_token == rhs.refresh_token
+            && lhs.token_type == rhs.token_type
+            && lhs.expires_in == rhs.expires_in
+            && lhs.scope == rhs.scope
+}
+

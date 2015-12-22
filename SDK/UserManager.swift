@@ -9,6 +9,7 @@
 import Foundation
 import Alamofire
 import Locksmith
+import SwiftyJSON
 
 
 public typealias AuthTokenHandler = (AuthToken?, ErrorType?) -> Void
@@ -106,7 +107,7 @@ public class UserManager: NSObject {
     }
 
     init(
-            baseUrl baseUrl: String = "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com",
+            baseUrl: String = "http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com",
             clientId: String = "testapp-client",
             clientSecret: String = "VXaIKFbydKSQlWxqqJXOsH9-63Y=",
             secureStoreUserAccoutnName: String = "healthmapper"
@@ -233,7 +234,7 @@ public class UserManager: NSObject {
 
         if let provider = self.userCredentialProvider {
 
-            var userCredentials = provider()
+            let userCredentials = provider()
 
             getAuthToken(.Client) {
                 (clientToken, error) in

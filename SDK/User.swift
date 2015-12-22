@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftyJSON
 
 public struct User {
 

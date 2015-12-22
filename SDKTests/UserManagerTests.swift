@@ -143,7 +143,7 @@ class UserManagerTests: XCTestCase {
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
 
         let temp = String(NSDate().timeIntervalSince1970)
-        if let user = registerUserUtil(temp, password: temp) {
+        if let _ = registerUserUtil(temp, password: temp) {
             expectation = expectationWithDescription("201") //created
 
             userManager.getAuthToken(.User, retrievalMode: .CacheThenNetwork) {
@@ -186,8 +186,8 @@ class UserManagerTests: XCTestCase {
 
     func testReadUser() {
         let temp = String(NSDate().timeIntervalSince1970)
-        if let user = registerUserUtil(temp, password: temp) {
-            var expectation = expectationWithDescription("200") //read
+        if let _ = registerUserUtil(temp, password: temp) {
+            let expectation = expectationWithDescription("200") //read
             userManager.readUser() {
                 (user, err) in
                 print("callback received read user: \(user) err: \(err)")
@@ -200,14 +200,14 @@ class UserManagerTests: XCTestCase {
     }
 
     func testReadUserNoLocalUserError() {
-        var expectation = expectationWithDescription("4xx") //read
+        let expectation = expectationWithDescription("4xx") //read
         userManager.readUser() {
             (user, err) in
             print("callback received read user: \(user) err: \(err)")
             if user != nil {
                 XCTFail("Should not have a user here")
             }
-            XCTAssertEqual(UserSDKError.UserNotLoggedIn, err as! UserSDKError)
+            XCTAssertEqual(UserSDKError.UserNotLoggedIn, err as? UserSDKError)
             expectation.fulfill()
         }
         waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
@@ -223,7 +223,7 @@ class UserManagerTests: XCTestCase {
             return userCredential
         }
         var userSuccess: User?
-        var expectation = expectationWithDescription("201") //created
+        let expectation = expectationWithDescription("201") //created
         userManager.registerUser() {
             (user, err) in
             if let e = err {
