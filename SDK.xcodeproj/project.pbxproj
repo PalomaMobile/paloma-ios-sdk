@@ -17,6 +17,7 @@
 		2EF64FC31C0824360043F6EC /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF64FC21C0824360043F6EC /* UserManager.swift */; };
 		321D05366171DF99FF1BC99E /* Cartfile in Resources */ = {isa = PBXBuildFile; fileRef = 321D0B1EB0B3FAE11022833B /* Cartfile */; };
 		321D07D357D573BFF968EAE0 /* UserCredential.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D037793C2836DF887566F /* UserCredential.swift */; };
+		321D0D6AC39E30812986E3E3 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 321D0A37EEA677B0736D0755 /* README.md */; };
 		321D0EBAB387E552520CFA28 /* AuthTokenTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D039C7B961ADD712CD29E /* AuthTokenTest.swift */; };
 		321D0F48EB91E0FAC03ACAAB /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D0245206E50B9F86B81BC /* User.swift */; };
 /* End PBXBuildFile section */
@@ -179,6 +180,7 @@
 		321D0245206E50B9F86B81BC /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		321D037793C2836DF887566F /* UserCredential.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserCredential.swift; sourceTree = "<group>"; };
 		321D039C7B961ADD712CD29E /* AuthTokenTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthTokenTest.swift; sourceTree = "<group>"; };
+		321D0A37EEA677B0736D0755 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		321D0B1EB0B3FAE11022833B /* Cartfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Cartfile; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -254,6 +256,7 @@
 				2EF64F9D1C08048D0043F6EC /* SDKTests */,
 				2EF64F901C08048C0043F6EC /* Products */,
 				321D0B1EB0B3FAE11022833B /* Cartfile */,
+				321D0A37EEA677B0736D0755 /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -552,6 +555,7 @@
 				2EB5BEEA1C153C2000738354 /* AuthToken.swift in Sources */,
 				321D0F48EB91E0FAC03ACAAB /* User.swift in Sources */,
 				321D07D357D573BFF968EAE0 /* UserCredential.swift in Sources */,
+				321D0D6AC39E30812986E3E3 /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
