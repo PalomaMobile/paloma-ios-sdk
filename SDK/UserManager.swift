@@ -1,11 +1,6 @@
 //
-//  AuthManager.swift
+//  UserManager.swift
 //  SDK
-//
-//  endpoint: http://ec2-46-137-242-200.ap-southeast-1.compute.amazonaws.com
-//  path: /oauth/token
-//  client id: testapp-client
-//  client secret: VXaIKFbydKSQlWxqqJXOsH9-63Y=
 //
 //  Created by karel herink on 27/11/2015.
 //  Copyright © 2015 Paloma Mobile Ltd. All rights reserved.
@@ -18,6 +13,7 @@ import Locksmith
 
 public typealias AuthTokenHandler = (AuthToken?, ErrorType?) -> Void
 public typealias UserCredentialProvider = () -> UserCredential
+public typealias UserUpdateHandler = (User?, ErrorType?) -> Void
 
 // Specifies the token retrieval options.
 public enum TokenRetrievalMode {
@@ -39,12 +35,13 @@ public enum AuthTokenType: String {
     case User = "userToken"
 }
 
-public enum UserRegistrationError: ErrorType {
+public enum UserSDKError: ErrorType {
     case ErrNoUserCredentialProvider
+    case UserNotLoggedIn
 }
 
 @objc
-public class AuthManager: NSObject {
+public class UserManager: NSObject {
 
     var baseUrl: String
 
@@ -59,7 +56,6 @@ public class AuthManager: NSObject {
     }
 
     let secureStoreUserAccoutnName: String
-    var user: User? = nil
 
     var clientId: String
     var clientSecret: String
@@ -70,6 +66,8 @@ public class AuthManager: NSObject {
         get { return getAuthTokenFromSecureStore(.Client) }
         set { setAuthTokenInSecureStore(.Client, tokenValue: newValue) }
     }
+
+    var user: User? = nil
 
     var userToken: AuthToken? {
         get { return getAuthTokenFromSecureStore(.User) }
@@ -231,7 +229,7 @@ public class AuthManager: NSObject {
     }
 
 
-    public func registerUser(retrievalMode: TokenRetrievalMode = .CacheThenNetwork, userRegistrationHandler userRegistrationHandler: (User?, ErrorType?) -> Void) {
+    public func registerUser(userUpdateHandler: UserUpdateHandler) {
 
         if let provider = self.userCredentialProvider {
 
@@ -241,36 +239,68 @@ public class AuthManager: NSObject {
                 (clientToken, error) in
                 if let token = clientToken {
                     let request = Alamofire.request(.POST, self.registerUserUrl, parameters: userCredentials.toDictionary(), encoding: .JSON, headers: ["Authorization" : token.token_type + " " + token.access_token])
-                    print("DebugDescription: " + request.debugDescription)
+                    print("registerUser request: " + request.debugDescription)
 
                     request
                     .validate()
                     .responseJSON() {
-                        response in switch response.result {
+                        response in
+                        switch response.result {
                         case .Success(let jsonData):
                             print("Success with jsonData: \(jsonData)")
                             let json = JSON(jsonData)
                             self.user = User(json: json)
-                            userRegistrationHandler(self.user, nil)
+                            userUpdateHandler(self.user, nil)
                         case .Failure(let err):
                             print("Error: \(err)")
-                            userRegistrationHandler(nil, err)
+                            userUpdateHandler(nil, err)
                         }
                     }
                 }
                 else {
-                    userRegistrationHandler(nil, error)
+                    userUpdateHandler(nil, error)
                 }
             }
         }
         else {
-            userRegistrationHandler(nil, UserRegistrationError.ErrNoUserCredentialProvider)
+            userUpdateHandler(nil, UserSDKError.ErrNoUserCredentialProvider)
             return
         }
-
     }
 
+    public func readUser(userUpdateHandler: UserUpdateHandler) {
+        if let userId = user?.id {
+            getAuthToken(.User) {
+                (userToken, error) in
+                if let token = userToken {
+                    let request = Alamofire.request(.GET, self.readUserUrl + String(userId), headers: ["Authorization" : token.token_type + " " + token.access_token])
+                    print("registerUser request: " + request.debugDescription)
 
-    func tokenExpiredError(){}
+                    request
+                    .validate()
+                    .responseJSON() {
+                        response in
+                        switch response.result {
+                        case .Success(let jsonData):
+                            print("Success with jsonData: \(jsonData)\n")
+                            let json = JSON(jsonData)
+                            self.user = User(json: json)
+                            userUpdateHandler(self.user, nil)
+                        case .Failure(let err):
+                            print("Error: \(err)")
+                            userUpdateHandler(nil, err)
+                        }
+                    }
 
+                }
+                else {
+                    userUpdateHandler(nil, error)
+                }
+            }
+        }
+        else {
+            userUpdateHandler(nil, UserSDKError.UserNotLoggedIn)
+        }
+    }
+    
 }

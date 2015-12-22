@@ -10,27 +10,6 @@ import XCTest
 class AuthTokenTest: XCTestCase {
 
     func testAuthToken() {
-//        let authMan = AuthManager()
-//        let expectation = expectationWithDescription("200")
-//        let clientId = "testapp-client"
-//        let clientSecret = "VXaIKFbydKSQlWxqqJXOsH9-63Y="
-//
-//        authMan.getClientToken(clientId: clientId, clientSecret: clientSecret) {
-//            (token, err) in
-//            print("callback received json: \(token) err: \(err)")
-//            expectation.fulfill()
-//        }
-//        waitForExpectationsWithTimeout(NSTimeInterval(30.0), handler: nil)
-
-
-    /*
-    var access_token: String = ""
-    var refresh_token: String? = nil
-    var token_type: String = ""
-    var expires_in: Int = 0
-    var scope: String = ""
-    */
-
         let token: AuthToken = AuthToken(dict: [
                 "access_token": "value_access_token",
                 "refresh_token" : "value_refresh_token",

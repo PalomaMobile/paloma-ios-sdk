@@ -12,10 +12,9 @@
 		2EB5BEEC1C15423600738354 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB5BEEB1C15423600738354 /* SwiftyJSON.swift */; };
 		2EF64F931C08048C0043F6EC /* SDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 2EF64F921C08048C0043F6EC /* SDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2EF64F9A1C08048D0043F6EC /* SDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2EF64F8F1C08048C0043F6EC /* SDK.framework */; };
-		2EF64F9F1C08048D0043F6EC /* SDKTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF64F9E1C08048D0043F6EC /* SDKTests.swift */; };
+		2EF64F9F1C08048D0043F6EC /* UserManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF64F9E1C08048D0043F6EC /* UserManagerTests.swift */; };
 		2EF64FC11C0823820043F6EC /* Alamofire.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2EF64FB41C0819D60043F6EC /* Alamofire.framework */; };
-		2EF64FC31C0824360043F6EC /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF64FC21C0824360043F6EC /* AuthManager.swift */; };
-		321D01CFFC1AB6A2BAC936B1 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D0F538AA73F181E5D0655 /* AuthenticationManager.swift */; };
+		2EF64FC31C0824360043F6EC /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF64FC21C0824360043F6EC /* UserManager.swift */; };
 		321D05366171DF99FF1BC99E /* Cartfile in Resources */ = {isa = PBXBuildFile; fileRef = 321D0B1EB0B3FAE11022833B /* Cartfile */; };
 		321D07D357D573BFF968EAE0 /* UserCredential.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D037793C2836DF887566F /* UserCredential.swift */; };
 		321D0EBAB387E552520CFA28 /* AuthTokenTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321D039C7B961ADD712CD29E /* AuthTokenTest.swift */; };
@@ -124,15 +123,14 @@
 		2EF64F921C08048C0043F6EC /* SDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SDK.h; sourceTree = "<group>"; };
 		2EF64F941C08048C0043F6EC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2EF64F991C08048D0043F6EC /* SDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		2EF64F9E1C08048D0043F6EC /* SDKTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKTests.swift; sourceTree = "<group>"; };
+		2EF64F9E1C08048D0043F6EC /* UserManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserManagerTests.swift; sourceTree = "<group>"; };
 		2EF64FA01C08048D0043F6EC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2EF64FA91C0819D60043F6EC /* Alamofire.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Alamofire.xcodeproj; path = Alamofire/Alamofire.xcodeproj; sourceTree = "<group>"; };
-		2EF64FC21C0824360043F6EC /* AuthManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		2EF64FC21C0824360043F6EC /* UserManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		321D0245206E50B9F86B81BC /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		321D037793C2836DF887566F /* UserCredential.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserCredential.swift; sourceTree = "<group>"; };
 		321D039C7B961ADD712CD29E /* AuthTokenTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthTokenTest.swift; sourceTree = "<group>"; };
 		321D0B1EB0B3FAE11022833B /* Cartfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Cartfile; sourceTree = "<group>"; };
-		321D0F538AA73F181E5D0655 /* AuthenticationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,11 +192,10 @@
 			children = (
 				2EF64F921C08048C0043F6EC /* SDK.h */,
 				2EF64F941C08048C0043F6EC /* Info.plist */,
-				2EF64FC21C0824360043F6EC /* AuthManager.swift */,
+				2EF64FC21C0824360043F6EC /* UserManager.swift */,
 				2EB5BEE91C153C2000738354 /* AuthToken.swift */,
 				2EB5BEEB1C15423600738354 /* SwiftyJSON.swift */,
 				321D0245206E50B9F86B81BC /* User.swift */,
-				321D0F538AA73F181E5D0655 /* AuthenticationManager.swift */,
 				321D037793C2836DF887566F /* UserCredential.swift */,
 			);
 			path = SDK;
@@ -207,7 +204,7 @@
 		2EF64F9D1C08048D0043F6EC /* SDKTests */ = {
 			isa = PBXGroup;
 			children = (
-				2EF64F9E1C08048D0043F6EC /* SDKTests.swift */,
+				2EF64F9E1C08048D0043F6EC /* UserManagerTests.swift */,
 				2EF64FA01C08048D0043F6EC /* Info.plist */,
 				321D039C7B961ADD712CD29E /* AuthTokenTest.swift */,
 			);
@@ -435,10 +432,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				2EB5BEEC1C15423600738354 /* SwiftyJSON.swift in Sources */,
-				2EF64FC31C0824360043F6EC /* AuthManager.swift in Sources */,
+				2EF64FC31C0824360043F6EC /* UserManager.swift in Sources */,
 				2EB5BEEA1C153C2000738354 /* AuthToken.swift in Sources */,
 				321D0F48EB91E0FAC03ACAAB /* User.swift in Sources */,
-				321D01CFFC1AB6A2BAC936B1 /* AuthenticationManager.swift in Sources */,
 				321D07D357D573BFF968EAE0 /* UserCredential.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -447,7 +443,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2EF64F9F1C08048D0043F6EC /* SDKTests.swift in Sources */,
+				2EF64F9F1C08048D0043F6EC /* UserManagerTests.swift in Sources */,
 				321D0EBAB387E552520CFA28 /* AuthTokenTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
